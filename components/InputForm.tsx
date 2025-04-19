@@ -1,15 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { Ionicons } from '@expo/vector-icons'; // Ensure you have expo/vector-icons installed
+import { Ionicons } from '@expo/vector-icons';
+import { db } from '../firebaseConfig';
+import { collection, addDoc } from 'firebase/firestore';
 
 const InputForm = () => {
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState('Groceries');
 
-    const handleAddExpense = () => {
-        console.log(`Expense Added: ${amount} - ${category}`);
-        // Add your logic to handle the expense addition
+    const handleAddExpense = async () => {
+        if (!amount) {
+            Alert.alert("Error", "Please enter the amount");
+            return
+        }
+        try {
+            const docRef = await addDoc(collection(db, 'expenses'), {
+                userId: "Test-User",
+                expense: parseFloat(amount),
+                type: category,
+            });
+            console.log('Expense added with ID: ', docRef.id);
+            setAmount('');
+        } catch (error) {
+            console.error('Error adding expense: ', error);
+            Alert.alert("Error", "There was an error adding the expense")
+        }
     };
 
     return (
@@ -17,7 +33,7 @@ const InputForm = () => {
             <Text style={styles.label}>Enter Amount:</Text>
             <TextInput
                 style={styles.input}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 placeholder="Enter a number"
                 value={amount}
                 onChangeText={setAmount}
